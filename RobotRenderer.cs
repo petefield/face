@@ -7,12 +7,12 @@ public class RobotRenderer
 
     public RobotRenderer()
     {
-        Raylib.InitWindow(800, 480, "Henry 1");
+        Raylib.InitWindow(800, 480, "Blinky");
         Raylib.ToggleBorderlessWindowed();
 
         Raylib.ToggleFullscreen();
 
-        Raylib.SetTargetFPS(60);
+        Raylib.SetTargetFPS(25);
         Raylib.HideCursor();
 
         face = new Face();
