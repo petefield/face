@@ -1,18 +1,23 @@
 using Raylib_cs;
+using System.Linq.Expressions;
 using System.Numerics;
 
-public sealed class EyesRenderer
+
+public sealed class Face
 {
     public float LookX { get; set; }
     public float LookY { get; set; }
 
-    private const float PupilRadius = 25;
-    private const float EyeWidth = 180;
-    private const float EyeHeight = 160;
-    private static readonly Color IrisColor = new(80, 180, 255, 255);
+    private float EyeWidth = 180;
+    private float EyeHeight = 170;
 
     private const float MaxPupilTravelX = 35;
     private const float MaxPupilTravelY = 20;
+
+    const float blinkDuration = 0.5f;
+
+    private static readonly Color IrisColour = new(80, 220, 255, 255);
+
     private readonly Random _random = new();
 
     private float _lookTargetX;
@@ -21,14 +26,14 @@ public sealed class EyesRenderer
     private float _nextSaccadeIn;
 
     private float _time;
-private const float BreathingSpeed = 0.8f;
-private const float BreathingAmount = 3f;
+    private const float BreathingSpeed = 0.8f;
+    private const float BreathingAmount = 3f;
 
-    private const float SaccadeSpeed = 12f;
+    private const float SaccadeSpeed = 6f;
 
-        private const float MouthWidth = 90;
-        private const float MouthHeight = 35;
-        private const float MouthThickness = 6;
+    private const float MouthWidth = 90;
+    private const float MouthHeight = 35;
+    private const float MouthThickness = 6;
 
     private float _blinkTimer;
     private float _nextBlinkIn;
@@ -36,23 +41,23 @@ private const float BreathingAmount = 3f;
     private bool _blinking;
     private float _blinkAmount;
 
-    public EyesRenderer()
+    public Face()
     {
         ScheduleNextBlink();
         ScheduleNextSaccade();
     }
 
-    public void Update(float deltaTime)
+    public void Update(float deltaTime, FacialExpression expression)
     {
         _time += deltaTime;
         _saccadeTimer += deltaTime;
-
-      
 
         if (_saccadeTimer >= _nextSaccadeIn)
         {
             _lookTargetX = RandomRange(-0.25f, 0.25f);
             _lookTargetY = RandomRange(-0.15f, 0.15f);
+
+            EyeHeight = expression.EyeHeight;
 
             _saccadeTimer = 0f;
             ScheduleNextSaccade();
@@ -76,7 +81,6 @@ private const float BreathingAmount = 3f;
         {
             _blinkTimer += deltaTime;
 
-            const float blinkDuration = 0.15f;
 
             var progress = _blinkTimer / blinkDuration;
 
@@ -208,8 +212,7 @@ private const float BreathingAmount = 3f;
         }
     }
 
-private static readonly Color IrisColour =
-    new(80, 220, 255, 255);
+
 
 private void DrawPupil(Vector2 centre)
 {

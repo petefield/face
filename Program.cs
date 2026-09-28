@@ -1,24 +1,45 @@
-﻿using Raylib_cs;
+﻿
+var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton<EmotionState>();
+builder.Services.AddHostedService<RobotRendererService>();
 
-Raylib.InitWindow(800, 480, "Robot Face");
-Raylib.SetTargetFPS(60);
+var app = builder.Build();
 
-var eyes = new EyesRenderer();
-
-while (!Raylib.WindowShouldClose())
+app.MapGet("/", () => Results.Ok(new
 {
-    var deltaTime = Raylib.GetFrameTime();
+	app = "face",
+	status = "running"
+}));
 
-    eyes.Update(deltaTime);
+app.MapGet("/health", () => Results.Ok("ok"));
 
-    Raylib.BeginDrawing();
-    Raylib.ClearBackground(Color.Black);
+app.MapPost("/emotion", (string emotion, EmotionState emotionState) =>
+{
+	if (string.IsNullOrWhiteSpace(emotion))
+	{
+		return Results.BadRequest(new
+		{
+			error = "Query parameter 'emotion' is required.",
+			allowed = RobotRenderer.Emotions.Keys
+		});
+	}
 
-    eyes.Draw();
+	if (!RobotRenderer.Emotions.ContainsKey(emotion))
+	{
+		return Results.BadRequest(new
+		{
+			error = $"Unknown emotion '{emotion}'.",
+			allowed = RobotRenderer.Emotions.Keys
+		});
+	}
 
-    Raylib.EndDrawing();
-}
+	emotionState.Emotion = emotion;
 
+	return Results.Ok(new
+	{
+		emotion = emotionState.Emotion
+	});
+});
 
-Raylib.CloseWindow();
+app.Run();
