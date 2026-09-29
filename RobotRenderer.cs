@@ -1,51 +1,54 @@
 using Raylib_cs;
+using System.Numerics;
 
 public class RobotRenderer
     : IDisposable
 {
-    Face face;
+    FaceBase face;
 
     public RobotRenderer()
     {
-        Raylib.InitWindow(800, 480, "Blinky");
-        Raylib.ToggleBorderlessWindowed();
 
-        Raylib.ToggleFullscreen();
+        // Raylib.SetConfigFlags(
+        //     ConfigFlags.FullscreenMode |
+        //     ConfigFlags.VSyncHint |
+        //     ConfigFlags.UndecoratedWindow
+        // );
 
+        Raylib.InitWindow(640, 480, "Blinky");
+        Raylib.HideCursor();
         Raylib.SetTargetFPS(25);
         Raylib.HideCursor();
 
-        face = new Face();
+        face = new OwlFace();
     }
 
 
-public static Dictionary<string, FacialExpression> Emotions { get; } = new Dictionary<string, FacialExpression>(StringComparer.OrdinalIgnoreCase)
-    {
-        { "Happy", new FacialExpression() { EyebrowHeight = 25, EyeHeight = 190} },
-        { "Sad", new FacialExpression() { EyebrowHeight = 40, EyeHeight = 150} },
-        { "Angry", new FacialExpression() { EyebrowHeight = 20, EyeHeight = 100} },
-        { "Surprised", new FacialExpression() { EyebrowHeight = 30, EyeHeight = 200} },
-        { "Neutral", new FacialExpression() { EyebrowHeight = 35, EyeHeight = 170} }
-    };
+
     
-    public void Start(CancellationToken cancellationToken, EmotionState emotionState)
+    public void Start(CancellationToken cancellationToken, FaceState faceState)
     {
         while (!cancellationToken.IsCancellationRequested && !Raylib.WindowShouldClose())
         {
             var deltaTime = Raylib.GetFrameTime();
-            var emotion = emotionState.Emotion;
+            var expression = faceState.Emotion;
 
-            if (!Emotions.TryGetValue(emotion, out var expression))
-            {
-                expression = Emotions["Neutral"];
-            }
 
             face.Update(deltaTime, expression);
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.Black);
 
+            var centre = new Vector2(Raylib.GetScreenWidth() / 2f, Raylib.GetScreenHeight() / 2f);
+            Raylib.BeginMode2D(new Camera2D
+            {
+                Target = centre,
+                Offset = centre,
+       //         Rotation = 180f,
+                Zoom = 1f
+            });
             face.Draw();
+            Raylib.EndMode2D();
 
             Raylib.EndDrawing();
         }

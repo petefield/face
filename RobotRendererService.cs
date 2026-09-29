@@ -3,14 +3,14 @@ using Microsoft.Extensions.Hosting;
 public sealed class RobotRendererService : BackgroundService
 {
     private readonly IHostApplicationLifetime _applicationLifetime;
-    private readonly EmotionState _emotionState;
+    private readonly FaceState faceState;
 
     public RobotRendererService(
         IHostApplicationLifetime applicationLifetime,
-        EmotionState emotionState)
+        FaceState faceState)
     {
         _applicationLifetime = applicationLifetime;
-        _emotionState = emotionState;
+        this.faceState = faceState;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -18,7 +18,7 @@ public sealed class RobotRendererService : BackgroundService
         return Task.Run(() =>
         {
             using var renderer = new RobotRenderer();
-            renderer.Start(stoppingToken, _emotionState);
+            renderer.Start(stoppingToken, faceState);
 
             // If the window is closed manually, stop the web host as well.
             if (!stoppingToken.IsCancellationRequested)

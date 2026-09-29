@@ -10,4 +10,8 @@
     <PackageReference Include="raylib-cs" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="textures/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

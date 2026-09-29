@@ -1,8 +1,8 @@
 using System.Threading;
 
-public sealed class EmotionState
+public sealed class FaceState
 {
-    private string _emotion = "Neutral";
+    private string _emotion = "neutral";
 
     public string Emotion
     {
