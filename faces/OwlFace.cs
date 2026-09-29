@@ -23,7 +23,9 @@ public sealed class OwlFace : FaceBase
             { "neutral-open", Raylib.LoadTexture("./textures/OIP-Neutral.png") },
             { "neutral-closed", Raylib.LoadTexture("./textures/OIP-Netural-Blink.png") },
             { "happy-open", Raylib.LoadTexture("./textures/OIP-Happy.png") },
-            { "happy-closed", Raylib.LoadTexture("./textures/OIP-Happy-Blink.png") }
+            { "happy-closed", Raylib.LoadTexture("./textures/OIP-Happy-Blink.png") },
+            { "angry-open", Raylib.LoadTexture("./textures/OIP-Angry.png") },
+            { "angry-closed", Raylib.LoadTexture("./textures/OIP-Angry-Blink.png") }
         };
 
     }
