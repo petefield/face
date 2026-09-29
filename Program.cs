@@ -1,4 +1,6 @@
 ﻿
+using System.Numerics;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<FaceState>();
@@ -31,5 +33,19 @@ app.MapPost("/emotion", (string emotion, FaceState emotionState) =>
 		emotion = emotionState.Emotion
 	});
 });
+
+app.MapPost("/look/{x:int}/{y:int}", (int x, int y, FaceState emotionState) =>
+{
+	Vector2 lookDirection = new(x, y);
+
+	emotionState.LookDirection = lookDirection;
+
+	return Results.Ok(new
+	{
+		lookDirection = emotionState.LookDirection
+	});
+});
+
+
 
 app.Run();

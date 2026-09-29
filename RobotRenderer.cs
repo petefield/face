@@ -23,9 +23,6 @@ public class RobotRenderer
         face = new OwlFace();
     }
 
-
-
-    
     public void Start(CancellationToken cancellationToken, FaceState faceState)
     {
         while (!cancellationToken.IsCancellationRequested && !Raylib.WindowShouldClose())
@@ -33,8 +30,7 @@ public class RobotRenderer
             var deltaTime = Raylib.GetFrameTime();
             var expression = faceState.Emotion;
 
-
-            face.Update(deltaTime, expression);
+            face.Update(deltaTime, expression, faceState.LookDirection);
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.Black);

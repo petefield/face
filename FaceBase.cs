@@ -6,7 +6,7 @@ public abstract class FaceBase
 {
     protected readonly Random _random = new();
 
-    public abstract void Update(float deltaTime, string expression);
+    public abstract void Update(float deltaTime, string expression, Vector2 lookDirection);
 
     public abstract void Draw();  
      
