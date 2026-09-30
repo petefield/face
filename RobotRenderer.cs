@@ -9,11 +9,11 @@ public class RobotRenderer
     public RobotRenderer()
     {
 
-        // Raylib.SetConfigFlags(
-        //     ConfigFlags.FullscreenMode |
-        //     ConfigFlags.VSyncHint |
-        //     ConfigFlags.UndecoratedWindow
-        // );
+        Raylib.SetConfigFlags(
+            ConfigFlags.FullscreenMode |
+            ConfigFlags.VSyncHint |
+            ConfigFlags.UndecoratedWindow
+        );
 
         Raylib.InitWindow(640, 480, "Blinky");
         Raylib.HideCursor();
@@ -40,7 +40,7 @@ public class RobotRenderer
             {
                 Target = centre,
                 Offset = centre,
-       //         Rotation = 180f,
+               Rotation = 180f,
                 Zoom = 1f
             });
             face.Draw();

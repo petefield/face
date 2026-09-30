@@ -16,22 +16,39 @@ app.MapGet("/", () => Results.Ok(new
 
 app.MapGet("/health", () => Results.Ok("ok"));
 
-app.MapPost("/emotion", (string emotion, FaceState emotionState) =>
+app.MapPost("/emotion/{emotionValue}", (string emotionValue, FaceState emotionState) =>
 {
-	if (string.IsNullOrWhiteSpace(emotion))
+	try
 	{
-		return Results.BadRequest(new
+		if (string.IsNullOrWhiteSpace(emotionValue))
 		{
-			error = "Query parameter 'emotion' is required.",
+			return Results.BadRequest(new
+			{
+				error = "Query parameter 'emotion' is required.",
+			});
+		}
+
+		if (new string[]{ "happy",  "angry", "neutral","sleep" }.Contains(emotionValue) == false)
+		{
+			return Results.BadRequest(new
+			{
+				error = "Query parameter 'emotion' must be one of 'happy', 'angry', 'neutral', or 'sleep'.",
+			});
+		}
+
+		emotionState.Emotion = emotionValue;
+
+		return Results.Ok(new
+		{
+			emotion = emotionState.Emotion
 		});
+
 	}
-
-	emotionState.Emotion = emotion;
-
-	return Results.Ok(new
+	catch (Exception ex)
 	{
-		emotion = emotionState.Emotion
-	});
+		return Results.Problem(statusCode: 500, detail: ex.Message);
+	}
+	
 });
 
 app.MapPost("/look/{x:int}/{y:int}", (int x, int y, FaceState emotionState) =>

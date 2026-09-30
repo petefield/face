@@ -46,6 +46,12 @@ public sealed class OwlFace : FaceBase
             SmoothTowards(_currentLook.X, _lookDirection.X, t),
             SmoothTowards(_currentLook.Y, _lookDirection.Y, t));
 
+        if(emotion == "sleep")
+        {
+            _blinking = true;  // Possibly trigger a blink or some other neutral expression behavior
+            return;
+        }
+
         if (_blinking)
         {
             if (_blinkTimer >= 0.1f)
@@ -67,7 +73,7 @@ public sealed class OwlFace : FaceBase
 
     public override void Draw()
     {
-        Raylib.DrawTexture(textures[$"{_emotion}-{(_blinking ? "closed" : "open")}"], 0, 0, Color.White);
+        Raylib.DrawTexture(textures[$"{(_emotion == "sleep"?"neutral":_emotion)}-{(_blinking ? "closed" : "open")}"], 0, 0, Color.White);
 
         Vector2 screenCentre = new Vector2(Raylib.GetScreenWidth() / 2f, Raylib.GetScreenHeight() / 2f);
         Vector2 easedTarget = screenCentre + _currentLook;
@@ -82,7 +88,7 @@ public sealed class OwlFace : FaceBase
         }
 
         // Debug marker showing where the face is being told to look.
-        Raylib.DrawCircle((int)easedTarget.X, (int)easedTarget.Y, 20f, Color.Green);
+     //   Raylib.DrawCircle((int)easedTarget.X, (int)easedTarget.Y, 20f, Color.Green);
     }
 
     // Aims a pupil at the target, limited to the elliptical travel range of its socket.
