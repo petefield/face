@@ -14,7 +14,7 @@ Console.CancelKeyPress += (_, e) =>
     cts.Cancel();
 };
 
-Console.WriteLine($"Connected to brain at {baseAddress}");
+Console.WriteLine($"Connected to Blinky at {baseAddress}");
 Console.WriteLine("Type a message and press Enter. Commands: /reset, /exit");
 Console.WriteLine();
 
@@ -71,9 +71,8 @@ async Task SendAsync(string prompt)
             return;
         }
 
-        Write("brain> ", ConsoleColor.Green);
-        Console.WriteLine(result.Response);
-        WriteLine($"       [{result.Emotion}]", ConsoleColor.DarkGray);
+        Write("Blinky> ", ConsoleColor.Green);
+        Console.WriteLine($"{result.Response} {ToEmoticon(result.Emotion)}");
         Console.WriteLine();
     }
     catch (OperationCanceledException)
@@ -117,6 +116,13 @@ static string ResolveBaseAddress(string[] args)
 
     return Environment.GetEnvironmentVariable("BRAIN_URL") ?? "http://localhost:5233";
 }
+
+static string ToEmoticon(EmotionState emotion) => emotion switch
+{
+    EmotionState.Happy => ":-)",
+    EmotionState.Angry => ">:-(",
+    _ => ":-|",
+};
 
 static void Write(string text, ConsoleColor color)
 {

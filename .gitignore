@@ -482,3 +482,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Google service account key
+brain/Skills/Calendar/googlecalanderkeyfile.json

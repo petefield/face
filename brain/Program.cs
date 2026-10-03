@@ -8,6 +8,10 @@ builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection(OpenA
 builder.Services.AddSingleton<OpenAiService>();
 builder.Services.Configure<FaceOptions>(builder.Configuration.GetSection(FaceOptions.SectionName));
 builder.Services.AddHttpClient<FaceClient>();
+builder.Services.Configure<HomeAssistantOptions>(builder.Configuration.GetSection(HomeAssistantOptions.SectionName));
+
+builder.Services.Configure<GoogleCalendarOptions>(builder.Configuration.GetSection(GoogleCalendarOptions.SectionName));
+builder.Services.AddSingleton<GoogleAccessTokenProvider>();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSkills();
