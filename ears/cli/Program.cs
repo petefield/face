@@ -72,8 +72,43 @@ async Task SendAsync(string prompt)
         }
 
         Write("Blinky> ", ConsoleColor.Green);
-        Console.WriteLine($"{result.Response} {ToEmoticon(result.Emotion)}");
+
+        var responseText = result.Response;
+
+
+        await Speak(responseText);
+        
+
+        Console.WriteLine($"{responseText} {ToEmoticon(result.Emotion)}");
         Console.WriteLine();
+    }
+    catch (OperationCanceledException)
+    {
+    }
+    catch (Exception ex)
+    {
+        WriteLine($"error> {ex.Message}", ConsoleColor.Red);
+    }
+}
+
+async Task Speak(string? message)
+{
+    if(string.IsNullOrWhiteSpace(message))
+        return;    
+
+    try
+    {
+        using var response = await http.PostAsJsonAsync(
+            "http://localhost:5060/speak",
+            new { text = message },
+            jsonOptions,
+            cts.Token);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(cts.Token);
+            WriteLine($"error> speak failed: {(int)response.StatusCode} {response.ReasonPhrase}: {body}", ConsoleColor.Red);
+        }
     }
     catch (OperationCanceledException)
     {
@@ -121,7 +156,7 @@ static string ToEmoticon(EmotionState emotion) => emotion switch
 {
     EmotionState.Happy => ":-)",
     EmotionState.Angry => ">:-(",
-    _ => ":-|",
+    _ => $"[{emotion}]",
 };
 
 static void Write(string text, ConsoleColor color)

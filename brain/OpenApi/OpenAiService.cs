@@ -206,6 +206,7 @@ public class OpenAiService
         catch (JsonException)
         {
             // Malformed JSON block; fall back to neutral and leave the text untouched below.
+            Console.WriteLine(reply);
         }
 
         var text = trimmed[..match.Index].TrimEnd();

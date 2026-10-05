@@ -18,4 +18,5 @@ public enum EmotionState
     Neutral,
     Happy,
     Angry,
+    Sleep
 }

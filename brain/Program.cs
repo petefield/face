@@ -45,4 +45,6 @@ app.MapPost("/prompt/reset", async (OpenAiService openAi, CancellationToken canc
 })
 .WithName("ResetPromptHistory");
 
+Console.WriteLine("All Good. Brain Running!");
+
 app.Run();
