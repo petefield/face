@@ -73,11 +73,7 @@ async Task SendAsync(string prompt)
 
         Write("Blinky> ", ConsoleColor.Green);
 
-        var responseText = result.Response;
-
-
-        await Speak(responseText);
-        
+        var responseText = result.Response;        
 
         Console.WriteLine($"{responseText} {ToEmoticon(result.Emotion)}");
         Console.WriteLine();

@@ -16,6 +16,10 @@ Response:
 { "response": "The capital of France is Paris." }
 ```
 
+Speech runs fire-and-forget: `/prompt` returns after the AI response and face
+emotion update without waiting for playback. Speech failures are logged, and
+speech is cancelled when the app shuts down, not when the request ends.
+
 ## Configuration
 
 Settings live under the `OpenAI` section (`appsettings.json`, user-secrets, or environment variables):

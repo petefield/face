@@ -10,7 +10,10 @@ public sealed class OwlFace : FaceBase
         { "happy-open", Raylib.LoadTexture("./textures/OIP-Happy.png") },
         { "happy-closed", Raylib.LoadTexture("./textures/OIP-Happy-Blink.png") },
         { "angry-open", Raylib.LoadTexture("./textures/OIP-Angry.png") },
-        { "angry-closed", Raylib.LoadTexture("./textures/OIP-Angry-Blink.png") }
+        { "angry-closed", Raylib.LoadTexture("./textures/OIP-Angry-Blink.png") },
+        { "sleep-open", Raylib.LoadTexture("./textures/OIP-Sleep.png") },
+        { "sleep_closed", Raylib.LoadTexture("./textures/OIP-Sleep.png") }
+
     };
 
     private Vector2 _lookDirection;
@@ -48,7 +51,6 @@ public sealed class OwlFace : FaceBase
 
         if(emotion == "sleep")
         {
-            _blinking = true;  // Possibly trigger a blink or some other neutral expression behavior
             return;
         }
 
@@ -73,7 +75,10 @@ public sealed class OwlFace : FaceBase
 
     public override void Draw()
     {
-        Raylib.DrawTexture(textures[$"{(_emotion == "sleep"?"neutral":_emotion)}-{(_blinking ? "closed" : "open")}"], 0, 0, Color.White);
+
+        var textureKey = $"{(_emotion)}-{(_blinking ? "closed" : "open")}";
+
+        Raylib.DrawTexture(textures[textureKey], 0, 0, Color.White);
 
         Vector2 screenCentre = new Vector2(Raylib.GetScreenWidth() / 2f, Raylib.GetScreenHeight() / 2f);
         Vector2 easedTarget = screenCentre + _currentLook;

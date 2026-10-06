@@ -115,6 +115,8 @@ public class OpenAiService
             _history.AddRange(newMessages);
 
             var (text, emotion) = ExtractEmotion(reply);
+
+            
             return new PromptResponse(text, emotion);
         }
         finally
