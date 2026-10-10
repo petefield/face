@@ -27,6 +27,8 @@ builder.Services.AddHttpClient(XweatherOptions.HttpClientName, client =>
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSkills();
 
+var speechUrl = builder.Configuration["Speech:Url"] ?? "http://localhost:5060/speak";
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -71,7 +73,7 @@ async Task Speak(string? message, IHttpClientFactory httpClientFactory, Cancella
     {
         using var http = httpClientFactory.CreateClient("Speech");
         using var response = await http.PostAsJsonAsync(
-            "http://localhost:5060/speak",
+            speechUrl,
             new { text = message, speed = 180 },
             jsonOptions,
             cts);

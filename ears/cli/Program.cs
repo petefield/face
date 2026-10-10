@@ -14,13 +14,17 @@ Console.CancelKeyPress += (_, e) =>
     cts.Cancel();
 };
 
-Console.WriteLine($"Connected to Blinky at {baseAddress}");
-Console.WriteLine("Type a message and press Enter. Commands: /reset, /exit");
+Console.WriteLine();
+WriteLine("  BLINKY", ConsoleColor.Cyan);
+WriteLine("  Ear console", ConsoleColor.DarkGray);
+WriteLine($"  Connected: {baseAddress}", ConsoleColor.Green);
+Console.WriteLine();
+WriteLine("  Enter a message to chat. /reset clears history; /exit quits.", ConsoleColor.DarkGray);
 Console.WriteLine();
 
 while (!cts.IsCancellationRequested)
 {
-    Write("you> ", ConsoleColor.Cyan);
+    Write("  you  > ", ConsoleColor.Cyan);
     var input = Console.ReadLine();
 
     if (input is null)
@@ -48,7 +52,7 @@ while (!cts.IsCancellationRequested)
     await SendAsync(input);
 }
 
-Console.WriteLine("Bye.");
+WriteLine("  Bye.", ConsoleColor.DarkGray);
 return 0;
 
 async Task SendAsync(string prompt)
@@ -71,9 +75,9 @@ async Task SendAsync(string prompt)
             return;
         }
 
-        Write("Blinky> ", ConsoleColor.Green);
+        Write("  Blinky > ", ConsoleColor.Green);
 
-        var responseText = result.Response;        
+        var responseText = result.Response;
 
         Console.WriteLine(responseText);
         Console.WriteLine();
@@ -117,15 +121,21 @@ static string ResolveBaseAddress(string[] args)
         return args[0];
     }
 
-    return Environment.GetEnvironmentVariable("BRAIN_URL") ?? "http://localhost:5233";
+    return Environment.GetEnvironmentVariable("BRAIN_URL") ?? "http://localhost:5000";
 }
 
 static void Write(string text, ConsoleColor color)
 {
     var previous = Console.ForegroundColor;
-    Console.ForegroundColor = color;
-    Console.Write(text);
-    Console.ForegroundColor = previous;
+    try
+    {
+        Console.ForegroundColor = color;
+        Console.Write(text);
+    }
+    finally
+    {
+        Console.ForegroundColor = previous;
+    }
 }
 
 static void WriteLine(string text, ConsoleColor color)

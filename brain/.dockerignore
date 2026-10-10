@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+**/.vs/
+.git/
+src/Skills/Calendar/googlecalanderkeyfile.json

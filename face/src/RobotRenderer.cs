@@ -40,7 +40,7 @@ public class RobotRenderer
             {
                 Target = centre,
                 Offset = centre,
-               //Rotation = 180f,
+                Rotation = 180f,
                 Zoom = 1f
             });
             face.Draw();

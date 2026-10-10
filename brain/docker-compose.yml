@@ -1,0 +1,29 @@
+services:
+  brain:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/blinky-brain:latest
+    container_name: blinky-brain
+
+    ports:
+      - "5233:8080"
+
+    # Secrets come from a gitignored .env file next to this compose file.
+    environment:
+      OpenAI__ApiKey: ${OPENAI_API_KEY:?Set OPENAI_API_KEY in .env}
+      OpenAI__Model: ${OPENAI_MODEL:-gpt-4o}
+      Face__BaseUrl: ${FACE_URL:-http://blinky.local:5000}
+      Speech__Url: ${SPEECH_URL:-http://host.docker.internal:5060/speak}
+      Skills__homeAssistant__BaseUrl: ${HOMEASSISTANT_URL:-http://pippin:8123/}
+      Skills__homeAssistant__AccessToken: ${HOMEASSISTANT_TOKEN:-}
+      Skills__googleCalendar__ServiceAccountKeyFile: /secrets/googlecalanderkeyfile.json
+      Skills__googleCalendar__CalendarId: ${GOOGLE_CALENDAR_ID:-}
+      Skills__xweather__ClientId: ${XWEATHER_CLIENT_ID:-}
+      Skills__xweather__ClientSecret: ${XWEATHER_CLIENT_SECRET:-}
+      Skills__xweather__DefaultLocation: ${XWEATHER_DEFAULT_LOCATION:-London,UK}
+
+    volumes:
+      - ${GOOGLE_KEY_FILE:-./googlecalanderkeyfile.json}:/secrets/googlecalanderkeyfile.json:ro,z
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    restart: unless-stopped

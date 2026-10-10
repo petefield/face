@@ -1,0 +1,15 @@
+services:
+  tts:
+    build: .
+    container_name: blinky-tts
+
+    ports:
+      - "5060:5000"
+
+    volumes:
+      - /mnt/wslg:/mnt/wslg
+
+    environment:
+      PULSE_SERVER: unix:/mnt/wslg/PulseServer
+
+    restart: unless-stopped

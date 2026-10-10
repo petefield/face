@@ -484,7 +484,7 @@ $RECYCLE.BIN/
 *.swp
 
 # Google service account key
-brain/Skills/Calendar/googlecalanderkeyfile.json
+**/googlecalanderkeyfile.json
 mouth/voices/en_GB-semaine-medium.onnx
 mouth/voices/en_GB-semaine-medium.onnx.json
 mouth/zscaler-ca.crt
