@@ -114,10 +114,9 @@ public class OpenAiService
 
             _history.AddRange(newMessages);
 
-            var (text, emotion) = ExtractEmotion(reply);
+            var text = reply;
 
-            
-            return new PromptResponse(text, emotion);
+            return new PromptResponse(text);
         }
         finally
         {
@@ -179,39 +178,5 @@ public class OpenAiService
         }
 
         return await File.ReadAllTextAsync(_systemPromptPath, cancellationToken);
-    }
-
-    /// <summary>
-    /// Splits the trailing ```json {"emotion": "..."} ``` block off the model's reply, returning the
-    /// remaining text and the parsed emotion. Falls back to <see cref="EmotionState.Neutral"/> if the
-    /// block is missing or malformed.
-    /// </summary>
-    private static (string Text, EmotionState Emotion) ExtractEmotion(string reply)
-    {
-        var trimmed = reply.TrimEnd();
-        var match = EmotionBlockRegex.Match(trimmed);
-        if (!match.Success)
-        {
-            return (reply, EmotionState.Neutral);
-        }
-
-        var emotion = EmotionState.Neutral;
-        try
-        {
-            using var document = JsonDocument.Parse(match.Groups["json"].Value);
-            if (document.RootElement.TryGetProperty("emotion", out var emotionProperty) &&
-                Enum.TryParse(emotionProperty.GetString(), ignoreCase: true, out EmotionState parsed))
-            {
-                emotion = parsed;
-            }
-        }
-        catch (JsonException)
-        {
-            // Malformed JSON block; fall back to neutral and leave the text untouched below.
-            Console.WriteLine(reply);
-        }
-
-        var text = trimmed[..match.Index].TrimEnd();
-        return (text, emotion);
     }
 }

@@ -4,13 +4,5 @@ namespace Cli;
 
 public record PromptRequest(string Prompt);
 
-public record PromptResponse(string Response, EmotionState Emotion);
+public record PromptResponse(string Response);
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum EmotionState
-{
-    Neutral,
-    Happy,
-    Angry,
-    Sleep
-}

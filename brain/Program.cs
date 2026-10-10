@@ -8,12 +8,21 @@ builder.Services.AddOpenApi();
 builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection(OpenAiOptions.SectionName));
 builder.Services.AddSingleton<OpenAiService>();
 builder.Services.Configure<FaceOptions>(builder.Configuration.GetSection(FaceOptions.SectionName));
-builder.Services.AddHttpClient<FaceClient>();
+builder.Services.AddHttpClient<IFaceClient, FaceClient>();
 builder.Services.AddHttpClient("Speech");
 builder.Services.Configure<HomeAssistantOptions>(builder.Configuration.GetSection(HomeAssistantOptions.SectionName));
 
 builder.Services.Configure<GoogleCalendarOptions>(builder.Configuration.GetSection(GoogleCalendarOptions.SectionName));
 builder.Services.AddSingleton<GoogleAccessTokenProvider>();
+
+builder.Services.Configure<XweatherOptions>(builder.Configuration.GetSection(XweatherOptions.SectionName));
+builder.Services.AddHttpClient(XweatherOptions.HttpClientName, client =>
+{
+    client.BaseAddress = new Uri("https://data.api.xweather.com/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
+.RemoveAllLoggers();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSkills();
@@ -27,7 +36,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/prompt", async (PromptRequest request, OpenAiService openAi, FaceClient faceClient, IHttpClientFactory httpClientFactory, CancellationToken cancellationToken) =>
+app.MapPost("/prompt", async (PromptRequest request, OpenAiService openAi, IHttpClientFactory httpClientFactory, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(request.Prompt))
     {
@@ -35,7 +44,6 @@ app.MapPost("/prompt", async (PromptRequest request, OpenAiService openAi, FaceC
     }
 
     var response = await openAi.GetResponseAsync(request.Prompt, cancellationToken);
-    await faceClient.SetEmotionAsync(response.Emotion, cancellationToken);
     _ = Speak(response.Response, httpClientFactory, app.Lifetime.ApplicationStopping);
     return Results.Ok(response);
 })

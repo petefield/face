@@ -12,7 +12,7 @@ public sealed class OwlFace : FaceBase
         { "angry-open", Raylib.LoadTexture("./textures/OIP-Angry.png") },
         { "angry-closed", Raylib.LoadTexture("./textures/OIP-Angry-Blink.png") },
         { "sleep-open", Raylib.LoadTexture("./textures/OIP-Sleep.png") },
-        { "sleep_closed", Raylib.LoadTexture("./textures/OIP-Sleep.png") }
+        { "sleep-closed", Raylib.LoadTexture("./textures/OIP-Sleep.png") }
 
     };
 

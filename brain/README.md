@@ -51,3 +51,48 @@ Edit `system-prompt.txt` (copied to the output directory on build) to change the
 ```bash
 dotnet run
 ```
+
+## Weather skill
+
+The automatically registered `get_weather` tool uses the
+[Xweather Weather API](https://www.xweather.com/docs/weather-api) for current
+observations and daily forecasts. An Xweather subscription with access to the
+observations and forecasts endpoints is required.
+
+Configure credentials using user-secrets from this directory (never commit them):
+
+```bash
+dotnet user-secrets set "Skills:xweather:ClientId" "<your-client-id>"
+dotnet user-secrets set "Skills:xweather:ClientSecret" "<your-client-secret>"
+dotnet user-secrets set "Skills:xweather:DefaultLocation" "london,gb"
+```
+
+Environment variables `Skills__xweather__ClientId`,
+`Skills__xweather__ClientSecret`, and `Skills__xweather__DefaultLocation` are
+also supported. The default location is optional; without it, the user must
+specify a location. Locations can be a city with state/country, a postal code
+supported by Xweather, or latitude,longitude.
+
+Example prompts:
+
+- "What is the weather in London now?"
+- "What is the forecast here for the next three days?"
+- "Will it rain in Paris tomorrow? Use Fahrenheit."
+
+Tool arguments are `location`, `report` (`current` or `forecast`), `units`
+(`metric` or `imperial`), and, for forecasts only, `days` (1-7, default 3) and
+`startDate` (`yyyy-MM-dd`, default today in the requested location). Current
+conditions default to Celsius and km/h. Results include observation/forecast
+timestamps, temperatures, wind, humidity (current), and precipitation probability
+(forecast); unavailable fields remain null, not zero. Historical weather is not
+supported, and forecast range/availability depends on the subscription.
+
+Missing configuration, invalid arguments, provider errors, empty results, and
+timeouts return explicit failures to the model. Caller cancellation propagates.
+HTTP request logging is disabled for the Xweather client because authentication
+uses query parameters.
+
+### Tests
+
+From the repository root, run `dotnet test brain.tests/brain.tests.csproj`.
+The weather tests use stub HTTP responses; no live API credentials are needed.

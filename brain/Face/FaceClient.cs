@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 namespace Brain;
 
 /// <summary>Notifies the face app of the robot's current emotional state via its HTTP API.</summary>
-public class FaceClient
+public class FaceClient : IFaceClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<FaceClient> _logger;
@@ -23,7 +23,7 @@ public class FaceClient
     /// Posts the given emotion to the face app's "/emotion/{emotion}" endpoint. Failures are logged
     /// but not thrown, so an unreachable face app never fails the caller's prompt request.
     /// </summary>
-    public async Task SetEmotionAsync(EmotionState emotion, CancellationToken cancellationToken = default)
+    public async Task SetEmotionAsync(string state, CancellationToken cancellationToken = default)
     {
         if (_httpClient.BaseAddress is null)
         {
@@ -31,22 +31,20 @@ public class FaceClient
             return;
         }
 
-        var emotionValue = emotion.ToString().ToLowerInvariant();
-
         try
         {
-            using var response = await _httpClient.PostAsync($"/emotion/{emotionValue}", content: null, cancellationToken);
+            using var response = await _httpClient.PostAsync($"/emotion/{state}", content: null, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning(
                     "Face app returned {StatusCode} when setting emotion to {Emotion}.",
                     (int)response.StatusCode,
-                    emotionValue);
+                    state);
             }
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            _logger.LogWarning(ex, "Failed to notify face app of emotion {Emotion}.", emotionValue);
+            _logger.LogWarning(ex, "Failed to notify face app of emotion {Emotion}.", state);
         }
     }
 

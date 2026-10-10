@@ -1,21 +1,15 @@
 services:
-
-  piper:
+  tts:
     build: .
-    container_name: piper-tts
+    container_name: blinky-tts
 
     ports:
       - "5060:5000"
 
-    devices:
-      - /dev/snd:/dev/snd
-
     volumes:
-      - ./voices:/voices:z
+      - /mnt/wslg:/mnt/wslg
 
     environment:
-      PIPER_MODEL: /voices/en_GB-semaine-medium.onnx
-      AUDIO_DEVICE: "plughw:3,0"
-      SPEECH_SPEED: 0.85
+      PULSE_SERVER: unix:/mnt/wslg/PulseServer
 
     restart: unless-stopped

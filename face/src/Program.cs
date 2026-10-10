@@ -28,6 +28,8 @@ app.MapPost("/emotion/{emotionValue}", (string emotionValue, FaceState emotionSt
 			});
 		}
 
+		emotionValue = emotionValue.ToLowerInvariant();
+
 		if (new string[]{ "happy",  "angry", "neutral","sleep" }.Contains(emotionValue) == false)
 		{
 			return Results.BadRequest(new
