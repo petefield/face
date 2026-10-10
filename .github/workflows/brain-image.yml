@@ -28,7 +28,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/blinky-brain
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/robot
           tags: |
             type=raw,value=latest
             type=sha,format=short
