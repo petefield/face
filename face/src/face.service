@@ -8,7 +8,7 @@ User=pete
 SupplementaryGroups=video render input
 WorkingDirectory=/home/pete/face
 Environment=LD_LIBRARY_PATH=/home/pete/face
-ExecStart=/home/pete/face/face --urls http://127.0.0.1:5000
+ExecStart=/home/pete/face/face --urls http://0.0.0.0:5000
 Restart=on-failure
 RestartSec=5
 

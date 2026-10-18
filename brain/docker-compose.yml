@@ -1,6 +1,6 @@
 services:
   brain:
-    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/blinky-brain:latest
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/robot:latest
     container_name: blinky-brain
 
     ports:

@@ -116,12 +116,8 @@ async Task ResetAsync()
 
 static string ResolveBaseAddress(string[] args)
 {
-    if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
-    {
-        return args[0];
-    }
 
-    return Environment.GetEnvironmentVariable("BRAIN_URL") ?? "http://localhost:5000";
+    return  "http://blinky.local:5233";
 }
 
 static void Write(string text, ConsoleColor color)
