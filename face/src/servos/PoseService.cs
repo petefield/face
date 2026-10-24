@@ -4,6 +4,9 @@ public static class ServoChannels
 {
     public const int Pan = 15;
     public const int Tilt = 14;
+    public const int Max = 15;
+
+    public static bool IsValid(int channel) => channel is >= 0 and <= Max;
 }
 
 /// <summary>Target angles for the pan and tilt servos. A null angle leaves that servo where it is.</summary>
@@ -38,12 +41,8 @@ public sealed class PoseService(ServoController servos)
     /// <summary>Starts moving the servos to the pose; moves run in the background.</summary>
     public object Apply(Pose pose)
     {
-        object? Run(int channel, double? angle)
-        {
-            if (angle is not { } a) return null;
-            var (from, to) = servos.Move(channel, a);
-            return new { from, to };
-        }
+        ServoMove? Run(int channel, double? angle) =>
+            angle is { } a ? servos.Move(channel, a) : null;
 
         return new
         {

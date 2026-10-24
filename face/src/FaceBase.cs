@@ -1,5 +1,3 @@
-using Raylib_cs;
-using System.Linq.Expressions;
 using System.Numerics;
 
 public abstract class FaceBase
@@ -8,9 +6,8 @@ public abstract class FaceBase
 
     public abstract void Update(float deltaTime, string expression, Vector2 lookDirection);
 
-    public abstract void Draw();  
-     
-   
+    public abstract void Draw();
+
     protected float RandomRange(float min, float max)
     {
         return min + (float)_random.NextDouble() * (max - min);

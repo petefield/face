@@ -9,16 +9,9 @@ public class RobotRenderer
     public RobotRenderer()
     {
 
-        // Raylib.SetConfigFlags(
-        //     ConfigFlags.FullscreenMode |
-        //     ConfigFlags.VSyncHint |
-        //     ConfigFlags.UndecoratedWindow
-        // );
-
         Raylib.InitWindow(640, 480, "Blinky");
         Raylib.HideCursor();
         Raylib.SetTargetFPS(25);
-        Raylib.HideCursor();
 
         face = new OwlFace();
     }

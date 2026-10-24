@@ -33,7 +33,10 @@ public class FaceClient : IFaceClient
 
         try
         {
-            using var response = await _httpClient.PostAsync($"/emotion/{state}", content: null, cancellationToken);
+
+            var content = JsonContent.Create(new {pose = state});
+
+            using var response = await _httpClient.PostAsync($"/state", content: content, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning(

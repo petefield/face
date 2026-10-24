@@ -7,9 +7,9 @@ session is using the display. The .NET runtime is included in the publish output
 On the development machine, publish and copy the output directory to the Pi:
 
 ```sh
-dotnet publish face.csproj -c Release -r linux-arm64 --self-contained true -p:PublishSingleFile=true -o bin/Release/net8.0/linux-arm64/publish
+dotnet publish face.csproj -c Release -r linux-arm64 --self-contained true -p:PublishSingleFile=true -o bin/Release/net10.0/linux-arm64/publish
 ssh pi@<pi-host> 'mkdir -p ~/face'
-scp -r bin/Release/net8.0/linux-arm64/publish/. pi@<pi-host>:~/face/
+scp -r bin/Release/net10.0/linux-arm64/publish/. pi@<pi-host>:~/face/
 ```
 
 `raylib-cs` 8.0.0 does not ship a Linux ARM64 native library. On the Pi, build
