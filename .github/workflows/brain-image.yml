@@ -11,12 +11,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
+  # The brain only runs on the Pi, so build arm64 natively (no emulation).
+  build:
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
-
-      - uses: docker/setup-qemu-action@v3
 
       - uses: docker/setup-buildx-action@v3
 
@@ -33,11 +32,10 @@ jobs:
             type=raw,value=latest
             type=sha,format=short
 
-      # The Pi is arm64, so publish both architectures.
       - uses: docker/build-push-action@v6
         with:
           context: brain
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
