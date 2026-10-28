@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace Brain.Skills;
 
 /// <summary>Turns the robot's lights on or off through the Home Assistant REST API.</summary>
-public sealed class LightsSkill : ISkill
+public sealed class LightsSkill //: ISkill
 {
     private readonly HttpClient _httpClient;
     
@@ -24,6 +24,11 @@ public sealed class LightsSkill : ISkill
         }
 
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.Value.AccessToken);
+
+        _logger.LogInformation(
+            "Home Assistant at {BaseUrl}, access token {TokenState}.",
+            options.Value.BaseUrl,
+            string.IsNullOrWhiteSpace(options.Value.AccessToken) ? "NOT configured" : $"configured ({options.Value.AccessToken.Length} chars)");
     }
 
     public string Name => "control_lights";

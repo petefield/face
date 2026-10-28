@@ -1,7 +1,11 @@
+using System.ClientModel;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Brain.Skills;
+using Brain.Skills.Mcp;
 using Microsoft.Extensions.Options;
+using OpenAI;
 using OpenAI.Chat;
 
 namespace Brain;
@@ -17,29 +21,29 @@ public class OpenAiService
     /// <summary>Guards against a model that keeps requesting tools without ever producing an answer.</summary>
     private const int MaxToolRounds = 5;
     private readonly ChatClient _chatClient;
+    private readonly string _endpointDisplay;
     private readonly OpenAiOptions _options;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly McpSkillProvider _mcpSkills;
     private readonly string _systemPromptPath;
     private readonly ILogger<OpenAiService> _logger;
     private readonly List<ChatMessage> _history = new();
     private readonly SemaphoreSlim _historyLock = new(1, 1);
 
-    // Matches a trailing ```json { ... } ``` fenced code block, e.g. {"emotion": "happy"}.
-    private static readonly Regex EmotionBlockRegex = new(
-        @"```json\s*(?<json>\{.*?\})\s*```\s*$",
-        RegexOptions.Singleline | RegexOptions.Compiled);
-
     public OpenAiService(
         IOptions<OpenAiOptions> options,
         IWebHostEnvironment environment,
         IServiceScopeFactory scopeFactory,
+        McpSkillProvider mcpSkills,
         ILogger<OpenAiService> logger)
     {
         _options = options.Value;
         _scopeFactory = scopeFactory;
+        _mcpSkills = mcpSkills;
         _logger = logger;
 
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        var hasEndpoint = !string.IsNullOrWhiteSpace(_options.Endpoint);
+        if (string.IsNullOrWhiteSpace(_options.ApiKey) && !hasEndpoint)
         {
             throw new InvalidOperationException(
                 "OpenAI API key is not configured. Set OpenAI:ApiKey in appsettings.json, user-secrets, or the OPENAI__APIKEY environment variable.");
@@ -49,7 +53,11 @@ public class OpenAiService
             ? _options.SystemPromptFile
             : Path.Combine(environment.ContentRootPath, _options.SystemPromptFile);
 
-        _chatClient = new ChatClient(_options.Model, _options.ApiKey);
+        _endpointDisplay = hasEndpoint ? _options.Endpoint : "https://api.openai.com/v1";
+        var apiKey = string.IsNullOrWhiteSpace(_options.ApiKey) ? "none" : _options.ApiKey;
+        _chatClient = hasEndpoint
+            ? new ChatClient(_options.Model, new ApiKeyCredential(apiKey), new OpenAIClientOptions { Endpoint = new Uri(_options.Endpoint) })
+            : new ChatClient(_options.Model, apiKey);
     }
 
     /// <summary>
@@ -66,7 +74,9 @@ public class OpenAiService
             // Skills are resolved per call so scoped dependencies (such as FaceClient) are not captured
             // by this singleton.
             using var scope = _scopeFactory.CreateScope();
-            var skills = scope.ServiceProvider.GetServices<ISkill>().ToDictionary(skill => skill.Name);
+            var skills = scope.ServiceProvider.GetServices<ISkill>()
+                .Concat(await _mcpSkills.GetSkillsAsync(cancellationToken))
+                .ToDictionary(skill => skill.Name);
 
             var messages = new List<ChatMessage> { new SystemChatMessage(systemPrompt) };
             messages.AddRange(_history);
@@ -88,9 +98,43 @@ public class OpenAiService
             var reply = string.Empty;
             var newMessages = new List<ChatMessage> { new UserChatMessage(prompt) };
 
+            var emptyRetries = 0;
             for (var round = 0; round <= MaxToolRounds; round++)
             {
+                _logger.LogInformation(
+                    "LLM request (round {Round}) to {Endpoint} model {Model}: {MessageCount} messages, {ToolCount} tools. Last message: {Last}",
+                    round, _endpointDisplay, _options.Model, messages.Count, completionOptions.Tools.Count, Describe(messages[^1]));
+
+                var stopwatch = Stopwatch.StartNew();
                 var completion = await _chatClient.CompleteChatAsync(messages, completionOptions, cancellationToken);
+                stopwatch.Stop();
+
+                var usage = completion.Value.Usage;
+                _logger.LogInformation(
+                    "LLM response (round {Round}) from {Endpoint} in {ElapsedMs} ms: finish={FinishReason}, tokens in/out={InputTokens}/{OutputTokens}, text: {Text}",
+                    round,
+                    _endpointDisplay,
+                    stopwatch.ElapsedMilliseconds,
+                    completion.Value.FinishReason,
+                    usage?.InputTokenCount,
+                    usage?.OutputTokenCount,
+                    completion.Value.Content.Count > 0 ? completion.Value.Content[0].Text : string.Empty);
+
+                foreach (var call in completion.Value.ToolCalls)
+                {
+                    _logger.LogInformation("LLM tool call {ToolCallId}: {Skill}({Arguments})", call.Id, call.FunctionName, call.FunctionArguments);
+                }
+
+                var isEmpty = completion.Value.ToolCalls.Count == 0
+                    && (completion.Value.Content.Count == 0 || string.IsNullOrWhiteSpace(completion.Value.Content[0].Text));
+                if (isEmpty && emptyRetries < 2)
+                {
+                    // Small local models sometimes return nothing at all; asking again usually works.
+                    emptyRetries++;
+                    _logger.LogWarning("LLM returned an empty response; retrying ({Attempt}/2).", emptyRetries);
+                    round--;
+                    continue;
+                }
 
                 if (completion.Value.FinishReason != ChatFinishReason.ToolCalls)
                 {
@@ -106,6 +150,7 @@ public class OpenAiService
                 foreach (var toolCall in completion.Value.ToolCalls)
                 {
                     var result = await InvokeSkillAsync(skills, toolCall, cancellationToken);
+                    _logger.LogInformation("Tool result {ToolCallId} from {Skill}: {Result}", toolCall.Id, toolCall.FunctionName, result);
                     var toolMessage = new ToolChatMessage(toolCall.Id, result);
                     messages.Add(toolMessage);
                     newMessages.Add(toolMessage);
@@ -113,8 +158,10 @@ public class OpenAiService
             }
 
             _history.AddRange(newMessages);
+            TrimHistory();
 
-            var text = reply;
+            // The speech engine rejects emoji, which small models add despite the prompt.
+            var text = System.Text.RegularExpressions.Regex.Replace(reply, @"[\p{So}\p{Cs}\uFE0F\u200D]", string.Empty).Trim();
 
             return new PromptResponse(text);
         }
@@ -152,6 +199,35 @@ public class OpenAiService
         {
             _logger.LogError(ex, "Skill {Skill} threw an exception.", skill.Name);
             return $"Failed: {ex.Message}";
+        }
+    }
+
+    private static string Describe(ChatMessage message) => message switch
+    {
+        UserChatMessage => $"user: {message.Content.FirstOrDefault()?.Text}",
+        ToolChatMessage => $"tool: {message.Content.FirstOrDefault()?.Text}",
+        _ => message.GetType().Name,
+    };
+
+    /// <summary>
+    /// Drops the oldest turns beyond <see cref="OpenAiOptions.MaxHistoryTurns"/>. Trimming always starts at a
+    /// user message so tool calls are never separated from their results.
+    /// </summary>
+    private void TrimHistory()
+    {
+        var max = Math.Max(1, _options.MaxHistoryTurns);
+        var turnStarts = new List<int>();
+        for (var i = 0; i < _history.Count; i++)
+        {
+            if (_history[i] is UserChatMessage)
+            {
+                turnStarts.Add(i);
+            }
+        }
+
+        if (turnStarts.Count > max)
+        {
+            _history.RemoveRange(0, turnStarts[turnStarts.Count - max]);
         }
     }
 

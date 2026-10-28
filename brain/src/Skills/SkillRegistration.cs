@@ -9,7 +9,8 @@ public static class SkillRegistration
     {
         var skillTypes = Assembly.GetExecutingAssembly()
             .GetTypes()
-            .Where(type => typeof(ISkill).IsAssignableFrom(type) && type is { IsAbstract: false, IsInterface: false });
+            .Where(type => typeof(ISkill).IsAssignableFrom(type) && type is { IsAbstract: false, IsInterface: false }
+                && type != typeof(Mcp.McpSkill));
 
         foreach (var skillType in skillTypes)
         {

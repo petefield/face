@@ -1,89 +1,33 @@
 # Raspberry Pi 5 deployment
 
-This app needs 64-bit Raspberry Pi OS and a connected display. The DRM build
-below can be launched over SSH without a graphical login, provided no desktop
-session is using the display. The .NET runtime is included in the publish output.
+The face (raylib, rendering straight to the display over DRM/KMS) runs as the
+`face` service in [docker-compose.yml](docker-compose.yml), alongside `brain`
+and `voice`. It needs 64-bit Raspberry Pi OS, a connected display and no
+desktop session using it (no display manager running).
 
-On the development machine, publish and copy the output directory to the Pi:
+Raylib 6.0 is compiled inside [face/Dockerfile](face/Dockerfile) with
+`PLATFORM_DRM`, so nothing needs to be built by hand on the Pi.
 
-```sh
-dotnet publish face.csproj -c Release -r linux-arm64 --self-contained true -p:PublishSingleFile=true -o bin/Release/net10.0/linux-arm64/publish
-ssh pi@<pi-host> 'mkdir -p ~/face'
-scp -r bin/Release/net10.0/linux-arm64/publish/. pi@<pi-host>:~/face/
-```
-
-`raylib-cs` 8.0.0 does not ship a Linux ARM64 native library. On the Pi, build
-the matching raylib **6.0** shared library (once) and place it where the
-`raylib-cs` resolver looks for Linux ARM64 libraries:
+The image is built for arm64 by the
+[face-image workflow](.github/workflows/face-image.yml) on every push to `main`
+that touches `face/`, and published to Docker Hub as `<user>/blinky-face`. Deploy it
+with:
 
 ```sh
-sudo apt-get update
-sudo apt-get install build-essential git libdrm-dev libgbm-dev libegl1-mesa-dev libgles2-mesa-dev libasound2-dev
-git clone --depth 1 --branch 6.0 https://github.com/raysan5/raylib.git ~/raylib-6
-make -C ~/raylib-6/src clean
-make -C ~/raylib-6/src -j2 PLATFORM=PLATFORM_DRM RAYLIB_LIBTYPE=SHARED
-mkdir -p ~/face/runtimes/linux-arm64/native
-cp -L ~/raylib-6/src/libraylib.so ~/face/libraylib.so
-cp -L ~/raylib-6/src/libraylib.so ~/face/runtimes/linux-arm64/native/libraylib.so
+scp docker-compose.yml pi@<pi-host>:blinky/
+ssh pi@<pi-host> 'cd ~/blinky && docker compose pull face && docker compose up -d face'
 ```
 
-Before launching, check the native library on the Pi:
+To build on the Pi instead (slow, 10-20 minutes and a few GB of disk), copy
+`face/Dockerfile`, `face/.dockerignore` and `face/src` (without `bin/` and
+`obj/`) to `~/blinky/face/` and run `docker compose build face`.
 
-```sh
-file ~/face/face ~/face/libraylib.so
-ldd ~/face/libraylib.so
-```
+The container gets `/dev/dri` and `/dev/i2c-1` (PCA9685 servo board) and the
+`video`, `render` and `i2c` groups by numeric gid. If your Pi's gids differ,
+update `group_add` (`getent group video render i2c`). Servo angles persist in
+the `face-data` volume. The container restarts automatically, including at
+boot.
 
-Both files must report `aarch64`/`ARM aarch64`. If `libraylib.so` is missing,
-repeat the `make` and `cp` commands above. If `ldd` reports `not found` for a
-dependency, install that library on the Pi before launching.
-
-From an SSH session on the Pi, stop the desktop for this boot and launch:
-
-```sh
-sudo systemctl stop display-manager
-cd ~/face
-chmod +x face
-LD_LIBRARY_PATH="$PWD${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ./face --urls http://127.0.0.1:5000
-```
-
-To return to the desktop after stopping `face`, run
-`sudo systemctl start display-manager`. SSH should remain available while the
-desktop is stopped. Neither command changes the next boot's desktop setting.
-
-Check `http://127.0.0.1:5000/health` on the Pi. To control it from another
-machine, bind to a reachable address with `--urls http://0.0.0.0:5000` and
-restrict access to a trusted network; the emotion endpoint has no authentication.
-The DRM renderer needs a connected display and permission to access `/dev/dri`.
-It will not draw in your SSH terminal. If you instead want to keep the Pi's
-desktop running, rebuild raylib with `PLATFORM=PLATFORM_DESKTOP` after
-`make -C ~/raylib-6/src clean`, install the X11 development packages, and
-launch against the desktop's display rather than using the DRM library.
-
-## Start at boot
-
-Copy [face.service](face.service) to the Pi (alongside the published app):
-
-```sh
-scp face.service pete@192.168.1.89:~/face/face.service
-```
-
-The unit assumes the Pi user is `pete`, the executable and native library are
-in `/home/pete/face`, and the DRM build is installed. Adjust the paths and
-user in the unit if yours differ. On the Pi, stop any manually launched `face`
-process first, then disable the desktop and enable the service:
-
-```sh
-sudo systemctl set-default multi-user.target
-sudo systemctl disable --now display-manager
-sudo install -m 644 ~/face/face.service /etc/systemd/system/face.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now face.service
-sudo systemctl status face.service
-```
-
-After reboot, check `sudo journalctl -u face.service -b --no-pager` for startup
-logs. Use `sudo systemctl stop face.service` to stop the face and
-`sudo systemctl start face.service` to run it again; disable autostart with
-`sudo systemctl disable --now face.service`. The service listens on localhost
-only, as in the manual launch command.
+The API listens on port 5000 and `brain` reaches it at `http://face:5000`.
+Check it with `curl http://<pi-host>:5000/health`. The emotion endpoints have
+no authentication, so restrict access to a trusted network.

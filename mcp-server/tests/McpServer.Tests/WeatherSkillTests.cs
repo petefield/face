@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Brain.Tests;
+namespace McpServer.Tests;
 
 public sealed class WeatherSkillTests
 {

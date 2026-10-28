@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Cli</RootNamespace>
     <AssemblyName>braincli</AssemblyName>
+    <UserSecretsId>28504068-937d-4db6-8229-7b66fe7bb100</UserSecretsId>
   </PropertyGroup>
 
 </Project>

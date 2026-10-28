@@ -26,8 +26,10 @@ Settings live under the `OpenAI` section (`appsettings.json`, user-secrets, or e
 
 | Key                           | Description                                               | Default              |
 |-------------------------------|-------------------------------------------------------------|-----------------------|
-| `OpenAI:ApiKey`                | Your OpenAI API key (required)                              | *(none)*              |
+| `OpenAI:Endpoint`              | OpenAI-compatible base URL, e.g. Ollama `http://host:11434/v1` | *(OpenAI)*         |
+| `OpenAI:ApiKey`                | API key (required for OpenAI; any value for Ollama)         | *(none)*              |
 | `OpenAI:Model`                 | Model to use for completions                                 | `gpt-4o`              |
+| `OpenAI:MaxHistoryTurns`       | Recent conversation turns kept as context                    | `8`                   |
 | `OpenAI:SystemPromptFile`      | Path to a text file containing the system prompt             | `system-prompt.txt`   |
 
 ### Setting the API key
@@ -94,5 +96,5 @@ uses query parameters.
 
 ### Tests
 
-From the repository root, run `dotnet test brain.tests/brain.tests.csproj`.
+From the repository root, run `dotnet test mcp-server/tests/McpServer.Tests/McpServer.Tests.csproj`.
 The weather tests use stub HTTP responses; no live API credentials are needed.

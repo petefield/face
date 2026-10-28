@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Blinky.McpServer</RootNamespace>
+    <AssemblyName>McpServer</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />
+    <PackageReference Include="System.Memory.Data" Version="10.0.0" />
+  </ItemGroup>
+
+  <!-- Shared with the brain, which owns the skill contract and the timers file its timer watcher reads. -->
+  <ItemGroup>
+    <Compile Include="../../brain/src/Skills/ISkill.cs" Link="Skills/ISkill.cs" />
+    <Compile Include="../../brain/src/Skills/Timers/TimersFile.cs" Link="Skills/Timers/TimersFile.cs" />
+    <Compile Include="../../brain/src/Skills/Timers/TimersOptions.cs" Link="Skills/Timers/TimersOptions.cs" />
+  </ItemGroup>
+
+</Project>

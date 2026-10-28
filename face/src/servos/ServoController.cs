@@ -17,7 +17,8 @@ public sealed class ServoController : IDisposable
     private const int IdleReleaseMs = 1000; // stop driving the servo this long after a move ends
 
     private static readonly string AnglesFile =
-        Path.Combine(AppContext.BaseDirectory, "servo-angles.json");
+        Environment.GetEnvironmentVariable("SERVO_ANGLES_FILE")
+        ?? Path.Combine(AppContext.BaseDirectory, "servo-angles.json");
 
     private readonly object _lock = new();
     private readonly Dictionary<int, double> _currentAngles = [];

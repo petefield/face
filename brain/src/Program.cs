@@ -1,33 +1,25 @@
 using System.Text.Json;
 using Brain;
 using Brain.Skills;
+using Brain.Skills.Mcp;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection(OpenAiOptions.SectionName));
 builder.Services.AddSingleton<OpenAiService>();
-builder.Services.Configure<FaceOptions>(builder.Configuration.GetSection(FaceOptions.SectionName));
-builder.Services.AddHttpClient<IFaceClient, FaceClient>();
-builder.Services.AddHttpClient("Speech");
-builder.Services.Configure<HomeAssistantOptions>(builder.Configuration.GetSection(HomeAssistantOptions.SectionName));
-
-builder.Services.Configure<GoogleCalendarOptions>(builder.Configuration.GetSection(GoogleCalendarOptions.SectionName));
-builder.Services.AddSingleton<GoogleAccessTokenProvider>();
-
-builder.Services.Configure<XweatherOptions>(builder.Configuration.GetSection(XweatherOptions.SectionName));
-builder.Services.AddHttpClient(XweatherOptions.HttpClientName, client =>
-{
-    client.BaseAddress = new Uri("https://data.api.xweather.com/");
-    client.Timeout = TimeSpan.FromSeconds(15);
-})
-.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
-.RemoveAllLoggers();
+builder.Services.AddHttpClient(SpeechService.HttpClientName);
+builder.Services.AddSingleton<SpeechService>();
+builder.Services.Configure<TimersOptions>(builder.Configuration.GetSection(TimersOptions.SectionName));
+builder.Services.AddSingleton<TimersFile>();
+builder.Services.AddSingleton<TimerEvents>();
+builder.Services.AddHostedService<TimerWatcherService>();
+builder.Services.AddHostedService<TimerAlertService>();
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSkills();
-
-var speechUrl = builder.Configuration["Speech:Url"] ?? "http://localhost:5060/speak";
+builder.Services.Configure<McpOptions>(builder.Configuration.GetSection(McpOptions.SectionName));
+builder.Services.AddSingleton<McpSkillProvider>();
 
 var app = builder.Build();
 
@@ -38,7 +30,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/prompt", async (PromptRequest request, OpenAiService openAi, IHttpClientFactory httpClientFactory, CancellationToken cancellationToken) =>
+app.MapPost("/prompt", async (PromptRequest request, OpenAiService openAi, SpeechService speech, CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(request.Prompt))
     {
@@ -46,7 +38,7 @@ app.MapPost("/prompt", async (PromptRequest request, OpenAiService openAi, IHttp
     }
 
     var response = await openAi.GetResponseAsync(request.Prompt, cancellationToken);
-    _ = Speak(response.Response, httpClientFactory, app.Lifetime.ApplicationStopping);
+    _ = speech.SpeakAsync(response.Response, app.Lifetime.ApplicationStopping);
     return Results.Ok(response);
 })
 .WithName("SendPrompt");
@@ -61,34 +53,3 @@ app.MapPost("/prompt/reset", async (OpenAiService openAi, CancellationToken canc
 Console.WriteLine("All Good. Brain Running!");
 
 app.Run();
-
-async Task Speak(string? message, IHttpClientFactory httpClientFactory, CancellationToken cts)
-{
-    var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-
-    if(string.IsNullOrWhiteSpace(message))
-        return;    
-
-    try
-    {
-        using var http = httpClientFactory.CreateClient("Speech");
-        using var response = await http.PostAsJsonAsync(
-            speechUrl,
-            new { text = message, speed = 180 },
-            jsonOptions,
-            cts);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(cts);
-            Console.WriteLine($"error> speak failed: {(int)response.StatusCode} {response.ReasonPhrase}: {body}", ConsoleColor.Red);
-        }
-    }
-    catch (OperationCanceledException) when (cts.IsCancellationRequested)
-    {
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"error> {ex.Message}", ConsoleColor.Red);
-    }
-}

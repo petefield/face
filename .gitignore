@@ -488,3 +488,6 @@ $RECYCLE.BIN/
 mouth/voices/en_GB-semaine-medium.onnx
 mouth/voices/en_GB-semaine-medium.onnx.json
 mouth/zscaler-ca.crt
+
+# Local timer data
+brain/src/timers.md

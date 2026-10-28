@@ -1,5 +1,5 @@
-services:
 
+services:
   piper:
     build: .
     container_name: piper-tts
@@ -10,12 +10,15 @@ services:
     devices:
       - /dev/snd:/dev/snd
 
+    ipc: host
+
     volumes:
-      - ./voices:/voices:z
+      - ./voices:/voices:ro
+      - /home/pete/.asoundrc:/etc/asound.conf:ro
 
     environment:
       PIPER_MODEL: /voices/en_GB-semaine-medium.onnx
-      AUDIO_DEVICE: "plughw:3,0"
-      SPEECH_SPEED: 0.85
+      AUDIO_DEVICE: default
+      SPEECH_SPEED: "0.85"
 
     restart: unless-stopped
