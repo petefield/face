@@ -31,3 +31,10 @@ boot.
 The API listens on port 5000 and `brain` reaches it at `http://face:5000`.
 Check it with `curl http://<pi-host>:5000/health`. The emotion endpoints have
 no authentication, so restrict access to a trusted network.
+
+The `voice` service (Piper text-to-speech, source in [mouth/](mouth)) is
+published the same way by the
+[mouth-image workflow](.github/workflows/mouth-image.yml) as
+`<user>/blinky-voice`. The image contains only `app.py`; the voice model is
+mounted from `~/blinky/mouth/voices/` on the Pi (it is not in git). Deploy with
+`docker compose pull voice && docker compose up -d voice`.

@@ -54,6 +54,7 @@ services:
     restart: unless-stopped
 
   voice:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/blinky-voice:latest
     build: ./mouth
     container_name: blinky-voice
 
