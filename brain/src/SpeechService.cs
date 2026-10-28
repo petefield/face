@@ -7,8 +7,6 @@ public class SpeechService(IHttpClientFactory httpClientFactory, IConfiguration 
 {
     public const string HttpClientName = "Speech";
 
-    private const int Speed = 180;
-
     private readonly string _speechUrl = configuration["Speech:Url"] ?? "http://localhost:5060/speak";
 
     public async Task SpeakAsync(string? message, CancellationToken cancellationToken = default)
@@ -21,7 +19,7 @@ public class SpeechService(IHttpClientFactory httpClientFactory, IConfiguration 
         try
         {
             using var http = httpClientFactory.CreateClient(HttpClientName);
-            using var response = await http.PostAsJsonAsync(_speechUrl, new { text = message, speed = Speed }, cancellationToken);
+            using var response = await http.PostAsJsonAsync(_speechUrl, new { text = message }, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
