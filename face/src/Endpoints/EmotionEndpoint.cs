@@ -1,7 +1,7 @@
 public static class EmotionEndpoint
 {
 	public static void MapEmotion(this IEndpointRouteBuilder app) =>
-		app.MapPost("/emotion/{emotionValue}", (string expression, FaceState face, PoseService poses) =>
+		app.MapPost("/emotion/{expression}", (string expression, FaceState face, PoseService poses) =>
 		{
 			expression = expression.Trim().ToLowerInvariant();
 
