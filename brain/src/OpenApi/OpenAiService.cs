@@ -4,6 +4,7 @@ using System.Text.Json;
 using Brain.Skills;
 using Brain.Skills.Mcp;
 using Microsoft.Extensions.Options;
+using ModelContextProtocol.Protocol;
 using OpenAI;
 using OpenAI.Chat;
 
@@ -96,6 +97,7 @@ public class OpenAiService
             {
                 if (exposedSkillNames.Add(skill.Name))
                 {
+                    _logger.LogInformation($"/t skill: {skill.Name}");
                     completionOptions.Tools.Add(ChatTool.CreateFunctionTool(skill.Name, skill.Description, skill.ParameterSchema));
                 }
             }
@@ -111,6 +113,7 @@ public class OpenAiService
                     round, _endpointDisplay, _options.Model, messages.Count, completionOptions.Tools.Count, Describe(messages[^1]));
 
                 var stopwatch = Stopwatch.StartNew();
+                _logger.LogInformation(prompt);
                 var completion = await _chatClient.CompleteChatAsync(messages, completionOptions, cancellationToken);
                 stopwatch.Stop();
 
@@ -132,6 +135,7 @@ public class OpenAiService
 
                 var isEmpty = completion.Value.ToolCalls.Count == 0
                     && (completion.Value.Content.Count == 0 || string.IsNullOrWhiteSpace(completion.Value.Content[0].Text));
+
                 if (isEmpty && emptyRetries < 2)
                 {
                     // Small local models sometimes return nothing at all; asking again usually works.
@@ -144,11 +148,14 @@ public class OpenAiService
                 if (completion.Value.FinishReason != ChatFinishReason.ToolCalls)
                 {
                     reply = completion.Value.Content.Count > 0 ? completion.Value.Content[0].Text : string.Empty;
+                    _logger.LogInformation($"/t {reply}");
                     newMessages.Add(new AssistantChatMessage(reply));
                     break;
                 }
 
                 var assistantMessage = new AssistantChatMessage(completion.Value);
+                _logger.LogInformation($"/t {assistantMessage}");
+
                 messages.Add(assistantMessage);
                 newMessages.Add(assistantMessage);
 
@@ -158,6 +165,7 @@ public class OpenAiService
                     if (toolCall.FunctionName == McpSearchSkill.SkillName)
                     {
                         AddDiscoveredSkills(result, completionOptions, exposedSkillNames);
+                        
                     }
 
                     _logger.LogInformation("Tool result {ToolCallId} from {Skill}: {Result}", toolCall.Id, toolCall.FunctionName, result);

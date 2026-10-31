@@ -27,14 +27,7 @@ builder.Services.Configure<HomeAssistantOptions>(builder.Configuration.GetSectio
 builder.Services.Configure<MusicOptions>(builder.Configuration.GetSection(MusicOptions.SectionName));
 builder.Services.Configure<MusicAssistantOptions>(builder.Configuration.GetSection(MusicAssistantOptions.SectionName));
 builder.Services.AddHttpClient(MusicAssistantOptions.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(15));
-if (string.Equals(builder.Configuration["Music:Provider"], "MusicAssistant", StringComparison.OrdinalIgnoreCase))
-{
-    builder.Services.AddSingleton<IMusicService, MusicAssistantMusicService>();
-}
-else
-{
-    builder.Services.AddSingleton<IMusicService, InMemoryMusicService>();
-}
+builder.Services.AddSingleton<IMusicService, MusicAssistantMusicService>();
 
 builder.Services.AddMcpServer()
     .WithHttpTransport(options => options.Stateless = true)
@@ -49,6 +42,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapMcp("/mcp");
+
+await app.Services.GetRequiredService<IMusicService>().StopAsync();
 
 var music = app.MapGroup("/music").WithTags("Music");
 music.MapGet("/search", (string q, IMusicService svc, CancellationToken ct) => svc.SearchAsync(q, cancellationToken: ct)).WithName("SearchMusic");

@@ -3,7 +3,7 @@ namespace Blinky.McpServer.Music;
 /// <summary>Options bound from the "Music:MusicAssistant" configuration section.</summary>
 public sealed class MusicAssistantOptions
 {
-    public const string SectionName = "Music:MusicAssistant";
+    public const string SectionName = "Skills:musicAssistant";
     public const string HttpClientName = "MusicAssistant";
 
     /// <summary>Base URL of the Music Assistant server, e.g. "http://192.168.1.69:8095".</summary>

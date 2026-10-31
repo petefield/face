@@ -52,7 +52,10 @@ services:
       Skills__xweather__ClientSecret: ${XWEATHER_CLIENT_SECRET:-}
       Skills__xweather__DefaultLocation: ${XWEATHER_DEFAULT_LOCATION:-London,UK}
       Skills__timers__FilePath: /data/timers.md
-
+      skills__musicAssistant__BaseUrl: "http://192.168.1.69:8095"
+      skills__musicAssistant__AccessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyUWVkVU9Gd0RDNXVrYlpPVFFyZWotWkpBTER6OEVpQjZGdVVVb09VZzBjIiwianRpIjoic2FMQy1TOHRpb09LRkFjRzBTVmNkY2JtdVJHam5LVkFISEFGU0E5LVlfYyIsImlhdCI6MTc5MzQ1NjUyOSwiZXhwIjoxODI0OTkyNTI5LCJ1c2VybmFtZSI6InBldGUiLCJyb2xlIjoiYWRtaW4iLCJ0b2tlbl9uYW1lIjoibWNwMiIsImlzX2xvbmdfbGl2ZWQiOnRydWV9.7E3DiDVhapYw5dKcFxgLDBNVWL2PACi7kBZAXffyv48"
+      skills__musicAssistant__QueueId": "Study - PC"
+    
     volumes:
       - ${GOOGLE_KEY_FILE:-./googlecalanderkeyfile.json}:/secrets/googlecalanderkeyfile.json:ro,z
       - mcp-data:/data
