@@ -1,7 +1,6 @@
 using System.ClientModel;
 using System.Diagnostics;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Brain.Skills;
 using Brain.Skills.Mcp;
 using Microsoft.Extensions.Options;
@@ -30,17 +29,21 @@ public class OpenAiService
     private readonly List<ChatMessage> _history = new();
     private readonly SemaphoreSlim _historyLock = new(1, 1);
 
+    private readonly ISkillsRegister _skillsRegister;
+
     public OpenAiService(
         IOptions<OpenAiOptions> options,
         IWebHostEnvironment environment,
         IServiceScopeFactory scopeFactory,
         McpSkillProvider mcpSkills,
-        ILogger<OpenAiService> logger)
+        ILogger<OpenAiService> logger, 
+        ISkillsRegister skillsRegister)
     {
         _options = options.Value;
         _scopeFactory = scopeFactory;
         _mcpSkills = mcpSkills;
         _logger = logger;
+        _skillsRegister = skillsRegister;
 
         var hasEndpoint = !string.IsNullOrWhiteSpace(_options.Endpoint);
         if (string.IsNullOrWhiteSpace(_options.ApiKey) && !hasEndpoint)
@@ -71,12 +74,10 @@ public class OpenAiService
         await _historyLock.WaitAsync(cancellationToken);
         try
         {
-            // Skills are resolved per call so scoped dependencies (such as FaceClient) are not captured
-            // by this singleton.
-            using var scope = _scopeFactory.CreateScope();
-            var skills = scope.ServiceProvider.GetServices<ISkill>()
-                .Concat(await _mcpSkills.GetSkillsAsync(cancellationToken))
-                .ToDictionary(skill => skill.Name);
+
+            var skills = _skillsRegister.Search(prompt)
+                .Concat(_skillsRegister.LocalSkills);
+                       
 
             var messages = new List<ChatMessage> { new SystemChatMessage(systemPrompt) };
             messages.AddRange(_history);
@@ -90,9 +91,13 @@ public class OpenAiService
 #pragma warning restore OPENAI001
             }
 
-            foreach (var skill in skills.Values)
+            var exposedSkillNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var skill in skills)
             {
-                completionOptions.Tools.Add(ChatTool.CreateFunctionTool(skill.Name, skill.Description, skill.ParameterSchema));
+                if (exposedSkillNames.Add(skill.Name))
+                {
+                    completionOptions.Tools.Add(ChatTool.CreateFunctionTool(skill.Name, skill.Description, skill.ParameterSchema));
+                }
             }
 
             var reply = string.Empty;
@@ -149,7 +154,12 @@ public class OpenAiService
 
                 foreach (var toolCall in completion.Value.ToolCalls)
                 {
-                    var result = await InvokeSkillAsync(skills, toolCall, cancellationToken);
+                    var result = await InvokeSkillAsync(toolCall, cancellationToken);
+                    if (toolCall.FunctionName == McpSearchSkill.SkillName)
+                    {
+                        AddDiscoveredSkills(result, completionOptions, exposedSkillNames);
+                    }
+
                     _logger.LogInformation("Tool result {ToolCallId} from {Skill}: {Result}", toolCall.Id, toolCall.FunctionName, result);
                     var toolMessage = new ToolChatMessage(toolCall.Id, result);
                     messages.Add(toolMessage);
@@ -171,12 +181,51 @@ public class OpenAiService
         }
     }
 
+    private void AddDiscoveredSkills(
+        string searchResult,
+        ChatCompletionOptions completionOptions,
+        HashSet<string> exposedSkillNames)
+    {
+        if (searchResult.StartsWith("Failed:", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        using var document = JsonDocument.Parse(searchResult);
+        if (document.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            throw new InvalidDataException("The tool search result must be a JSON array.");
+        }
+
+        foreach (var result in document.RootElement.EnumerateArray())
+        {
+            if (result.ValueKind != JsonValueKind.Object
+                || !result.TryGetProperty("name", out var nameElement)
+                || nameElement.ValueKind != JsonValueKind.String)
+            {
+                throw new InvalidDataException("A tool search result is missing its name.");
+            }
+
+            var name = nameElement.GetString()!;
+            if (!_skillsRegister.TryGetSkill(name, out var skill) || skill is null)
+            {
+                _logger.LogWarning("Tool search returned unregistered skill {Skill}.", name);
+                continue;
+            }
+
+            if (exposedSkillNames.Add(skill.Name))
+            {
+                completionOptions.Tools.Add(ChatTool.CreateFunctionTool(
+                    skill.Name, skill.Description, skill.ParameterSchema));
+            }
+        }
+    }
+
     private async Task<string> InvokeSkillAsync(
-        IReadOnlyDictionary<string, ISkill> skills,
         ChatToolCall toolCall,
         CancellationToken cancellationToken)
     {
-        if (!skills.TryGetValue(toolCall.FunctionName, out var skill))
+        if (!_skillsRegister.TryGetSkill(toolCall.FunctionName, out var skill))
         {
             _logger.LogWarning("Model requested unknown skill {Skill}.", toolCall.FunctionName);
             return $"Failed: no skill named '{toolCall.FunctionName}' is available.";

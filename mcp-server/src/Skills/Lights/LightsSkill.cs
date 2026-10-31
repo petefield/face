@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace Brain.Skills;
 
 /// <summary>Turns the robot's lights on or off through the Home Assistant REST API.</summary>
-public sealed class LightsSkill //: ISkill
+public sealed class LightsSkill : ISkill
 {
     private readonly HttpClient _httpClient;
     

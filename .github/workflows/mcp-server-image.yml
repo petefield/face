@@ -1,0 +1,47 @@
+name: Build and push MCP server image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mcp-server/src/**"
+      - "mcp-server/Dockerfile"
+      - ".dockerignore"
+      - "brain/src/Skills/ISkill.cs"
+      - "brain/src/Skills/Timers/TimersFile.cs"
+      - "brain/src/Skills/Timers/TimersOptions.cs"
+      - ".github/workflows/mcp-server-image.yml"
+  workflow_dispatch:
+
+jobs:
+  # The MCP server runs on the Pi, so build arm64 natively (no emulation).
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/blinky-mcp-server
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: mcp-server/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -117,7 +117,7 @@ async Task ResetAsync()
 static string ResolveBaseAddress(string[] args)
 {
 
-    return  "http://localhost:5000";
+    return  "http://blinky.local:5233";
 }
 
 static void Write(string text, ConsoleColor color)

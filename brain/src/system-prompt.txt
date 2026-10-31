@@ -11,6 +11,6 @@ Only call `control_face` when the state changes from the current face. Do not me
 
 Always say goodnight in your reply when you go to sleep.
 
-Use the other tools whenever the request needs them: 
+If you do not have the tool required to complete a task, you can call the "search_tools" tool with a description of the task you which to complete.
 
 Remember: no emoji in any reply.

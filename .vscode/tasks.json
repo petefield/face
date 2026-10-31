@@ -2,10 +2,28 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "build-brain",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/brain/src/Brain.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "build-mcp-server",
       "type": "process",
       "command": "dotnet",
-      "args": ["build", "${workspaceFolder}/mcp-server/src/McpServer.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
+      "args": [
+        "build",
+        "${workspaceFolder}/mcp-server/src/McpServer.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
       "group": "build",
       "problemMatcher": "$msCompile"
     }

@@ -12,6 +12,7 @@ services:
       OpenAI__Model: ${OPENAI_MODEL:-gpt-4o}
       Face__BaseUrl: ${FACE_URL:-http://face:5000}
       Speech__Url: ${SPEECH_URL:-http://voice:5000/speak}
+      Mcp__Servers__blinky__Url: http://mcp-server:5555/mcp
       Skills__homeAssistant__BaseUrl: ${HOMEASSISTANT_URL:-http://pippin:8123/}
       Skills__homeAssistant__AccessToken: ${HOMEASSISTANT_TOKEN:-}
       Skills__googleCalendar__ServiceAccountKeyFile: /secrets/googlecalanderkeyfile.json
@@ -25,6 +26,36 @@ services:
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+    depends_on:
+      - mcp-server
+
+    restart: unless-stopped
+
+  mcp-server:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME in .env}/blinky-mcp-server:latest
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+    container_name: blinky-mcp-server
+
+    ports:
+      - "5555:5555"
+
+    environment:
+      Face__BaseUrl: ${FACE_URL:-http://face:5000}
+      Skills__homeAssistant__BaseUrl: ${HOMEASSISTANT_URL:-http://pippin:8123/}
+      Skills__homeAssistant__AccessToken: ${HOMEASSISTANT_TOKEN:-}
+      Skills__googleCalendar__ServiceAccountKeyFile: /secrets/googlecalanderkeyfile.json
+      Skills__googleCalendar__CalendarId: ${GOOGLE_CALENDAR_ID:-}
+      Skills__xweather__ClientId: ${XWEATHER_CLIENT_ID:-}
+      Skills__xweather__ClientSecret: ${XWEATHER_CLIENT_SECRET:-}
+      Skills__xweather__DefaultLocation: ${XWEATHER_DEFAULT_LOCATION:-London,UK}
+      Skills__timers__FilePath: /data/timers.md
+
+    volumes:
+      - ${GOOGLE_KEY_FILE:-./googlecalanderkeyfile.json}:/secrets/googlecalanderkeyfile.json:ro,z
+      - mcp-data:/data
 
     restart: unless-stopped
 
@@ -50,6 +81,14 @@ services:
 
     volumes:
       - face-data:/data
+
+    # The image has no curl, so probe /health over bash's built-in TCP support
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5000 && printf 'GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
     restart: unless-stopped
 
@@ -79,3 +118,4 @@ services:
 
 volumes:
   face-data:
+  mcp-data:

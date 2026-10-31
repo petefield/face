@@ -1,14 +1,11 @@
 using Blinky.McpServer;
 using Blinky.McpServer.Music;
-using Brain;
 using Brain.Skills;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services.Configure<FaceOptions>(builder.Configuration.GetSection(FaceOptions.SectionName));
-builder.Services.AddHttpClient<IFaceClient, FaceClient>();
 builder.Services.Configure<TimersOptions>(builder.Configuration.GetSection(TimersOptions.SectionName));
 builder.Services.AddSingleton<TimersFile>();
 builder.Services.Configure<GoogleCalendarOptions>(builder.Configuration.GetSection(GoogleCalendarOptions.SectionName));
@@ -25,6 +22,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddSkills();
+builder.Services.Configure<HomeAssistantOptions>(builder.Configuration.GetSection(HomeAssistantOptions.SectionName));
 
 builder.Services.Configure<MusicOptions>(builder.Configuration.GetSection(MusicOptions.SectionName));
 builder.Services.Configure<MusicAssistantOptions>(builder.Configuration.GetSection(MusicAssistantOptions.SectionName));

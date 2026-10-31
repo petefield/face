@@ -7,6 +7,10 @@
 **A talking, emoting desk robot powered by an LLM.**<br>
 An animated owl face, servo-driven head movement and a synthesised voice, all running on a Raspberry Pi 5.
 
+[![brain](https://github.com/petefield/face/actions/workflows/brain-image.yml/badge.svg)](https://github.com/petefield/face/actions/workflows/brain-image.yml)
+[![face](https://github.com/petefield/face/actions/workflows/face-image.yml/badge.svg)](https://github.com/petefield/face/actions/workflows/face-image.yml)
+[![voice](https://github.com/petefield/face/actions/workflows/mouth-image.yml/badge.svg)](https://github.com/petefield/face/actions/workflows/mouth-image.yml)
+
 ![Raspberry Pi 5](https://img.shields.io/badge/Raspberry%20Pi-5-C51A4A?logo=raspberrypi&logoColor=white)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
@@ -140,7 +144,7 @@ Check that it is alive:
 
 ```sh
 curl http://<pi-host>:5000/health      # face -> "ok"
-docker compose ps
+docker compose ps                      # face shows (healthy)
 docker logs -f blinky-face
 ```
 

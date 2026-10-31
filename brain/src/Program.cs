@@ -5,6 +5,9 @@ using Brain.Skills.Mcp;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.Configure<FaceOptions>(builder.Configuration.GetSection(FaceOptions.SectionName));
+builder.Services.AddHttpClient<IFaceClient, FaceClient>();
+
 builder.Services.AddOpenApi();
 builder.Services.Configure<OpenAiOptions>(builder.Configuration.GetSection(OpenAiOptions.SectionName));
 builder.Services.AddSingleton<OpenAiService>();
@@ -21,12 +24,17 @@ builder.Services.AddSkills();
 builder.Services.Configure<McpOptions>(builder.Configuration.GetSection(McpOptions.SectionName));
 builder.Services.AddSingleton<McpSkillProvider>();
 
+builder.Services.AddSingleton<ISkillsRegister, SkillsRegister>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+await app.Services.GetRequiredService<ISkillsRegister>().BuildIndex(default);
+var relevantSkills = app.Services.GetRequiredService<ISkillsRegister>().Search("read my calendar");
 
 app.UseHttpsRedirection();
 
